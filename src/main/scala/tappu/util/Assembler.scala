@@ -17,7 +17,7 @@ object Assembler {
         breakable {
         for ( part <- parts ){
             val instr = part match {
-                case "/" => break// comment
+                case "/" => break() // comment
                 case ">" => 0
                 case "<" => 1
                 case "+" => 2
@@ -35,7 +35,6 @@ object Assembler {
                 program = i :: program
                 pc += 1
               }
-              case _ =>
             }
             
         }

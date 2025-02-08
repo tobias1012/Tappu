@@ -1,4 +1,4 @@
-# chisel-empty
+# Tappu: A Tape based Processor 
 
 An almost empty chisel project (and adder) as a starting point for hardware design.
 

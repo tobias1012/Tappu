@@ -3,3 +3,6 @@ target/
 *.fir
 *.v
 *.anno.json
+.vscode/
+.bloop/
+.metals/

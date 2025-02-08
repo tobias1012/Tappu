@@ -2,47 +2,40 @@ package tappu.util
 
 import scala.io.Source
 import scala.util.control.Breaks._
+import scala.util.parsing.combinator.RegexParsers
+import scala.util.parsing.combinator._
 
-object Assembler {
+
+class AssemblerParser extends RegexParsers {
+  def comment: Parser[String] = """//.*""".r ^^ { _.toString }
+  def instruction: Parser[Int] = ">" ^^ { _=> 0 } | "<" ^^ { _ => 1 } | "+" ^^ { _ => 2 } | "-" ^^ { _ => 3 } | "." ^^ { _ => 4 } | "," ^^ { _ => 5 } | "[" ^^ { _ => 6 } | "]" ^^ { _ => 7 }
+  //def label: Parser[String] = """[A-z].+?:""".r ^^ { _.toString.substring(0, _.toString.length - 1) }
+
+  def program: Parser[List[Int]] = (comment ~ program ^^ { case c ~ p => p }
+                                   | rep(instruction) ^^ {case i => i }
+                                   )
+}
+
+object Assembler extends  AssemblerParser{
+  val labels = collection.mutable.Map[String, Int]()
+
   def asm(asm: String): Seq[Int] = {
     val source = Source.fromFile(asm)
-    var program = List[Int]()
     var pc = 0
     
-    for (line <- source.getLines()) {
+    
+    val content = source.mkString
 
-        println(line)
+    println(content)
+    var result = parse(program, content) 
 
-        val parts = line.split("")
-        breakable {
-        for ( part <- parts ){
-            val instr = part match {
-                case "/" => break() // comment
-                case ">" => 0
-                case "<" => 1
-                case "+" => 2
-                case "-" => 3
-                case "." => 4
-                case "," => 5
-                case "[" => 6
-                case "]" => 7
-                case _ => throw new Exception(s"Unknown instruction: ${parts(0)}")
-                }
-
-           
-            instr match {
-              case (i: Int) => {
-                program = i :: program
-                pc += 1
-              }
-            }
-            
-        }
+    result match {
+      case Success(result, _) => {
+        println(result)
+        return result
       }
+      case NoSuccess(msg, _) => throw new Exception("Parsing failed: " + msg)
+      case _ => throw new Exception("Parsing failed")
     }
-    println("The Program:")
-    program.foreach(printf("0x%02x ",_))
-    println()
-    program
   }
 }

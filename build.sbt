@@ -12,6 +12,8 @@ addCompilerPlugin("edu.berkeley.cs" %% "chisel3-plugin" % chiselVersion cross Cr
 libraryDependencies += "edu.berkeley.cs" %% "chisel3" % chiselVersion
 libraryDependencies += "edu.berkeley.cs" %% "chiseltest" % "0.6.2"
 
+libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.4.0"
+
 
 /*
 scalaVersion := "2.13.14"

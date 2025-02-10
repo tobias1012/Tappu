@@ -15,6 +15,23 @@ class Tappu extends Module {
 
   val reg = RegInit(0.U(8.W))
   reg := io.in
+
+  val fetch::execute::Nil = Enum(2)
+
+  val state = RegInit(execute)
+  switch(state) {
+    is(fetch) {
+      state := execute
+    }
+    is(execute) {
+      //Only when read is starting
+      when(reg === 0.U) {
+        state := fetch
+      }
+    }
+  }
+
+
   io.out := reg
 }
 

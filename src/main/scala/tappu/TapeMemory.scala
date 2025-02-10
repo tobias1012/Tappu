@@ -12,9 +12,11 @@ class TapeMemory(program: List[Int], size: Int) extends Module {
   })
 
 
-  // "Stack"Pointer at tape(0)
-  // Programcounter at tape(1)
+  val tapeCounterReg = RegInit(0.U(16.W))
+
+  // Programcounter at tape(1,0)
   // Readpointer at tape(2)
+  // Accumulator at tape(3)
   val registerNum = 3
   val fullTapeSize = size + registerNum
 
@@ -24,17 +26,20 @@ class TapeMemory(program: List[Int], size: Int) extends Module {
     tape(i+registerNum) := program(i).U
   }
 
-  tape(0) := program.length.U
-  tape(1) := registerNum.U
+  tapeCounterReg := program.length.U
+  tape(0) := registerNum.U
+  tape(1) := 0.U
   tape(2) := tape(0)
+  tape(3) := 0.U
 
-  val instr = tape(tape(1))
+  val instr = tape(tape(0))
   
   when(io.wrEn) {
-    tape(tape(0)) := Mux(io.wrData(8) === 0.U, tape(tape(0)) + io.wrData(7,0), tape(tape(0)) - io.wrData(7,0))
+    val a = 0.U
+    tape(tapeCounterReg) := Mux(io.wrData(8) === 0.U, tape(tapeCounterReg) + io.wrData(7,0), tape(tapeCounterReg) - io.wrData(7,0))
     
   }
 
 
-  io.outData := tape(tape(0))
+  io.outData := tape(tapeCounterReg)
 }

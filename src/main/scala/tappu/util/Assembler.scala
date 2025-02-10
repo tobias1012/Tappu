@@ -18,6 +18,7 @@ class AssemblerParser extends RegexParsers {
                                 | "]" ^^ { _ => 7 } 
                                 | "p" ^^ { _ => 8}
                                 | "q" ^^ { _ => 9}
+                                | "s" ^^ { _ => 10}
   def program: Parser[List[Int]] = (comment ~ program ^^ { case c ~ p => p }
                                    | rep(instruction) ^^ {case i => i }
                                    )

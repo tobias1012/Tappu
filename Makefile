@@ -1,6 +1,9 @@
+
+APP ?= programs/test.tappu
+
 # Generate Verilog code
 doit:
-	sbt run
+	sbt "runMain tappu.TappuMain $(APP)"
 
 # Run the test
 test:

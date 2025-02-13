@@ -3,6 +3,6 @@
 // Overwrite the read register
 <0xFF>2-0xff+3
 // Create a counter and load the program
-<2p+127[.-<0xff>2+<2p]
+<2+127[.-<0xff>2+<2]
 // Once we're done loading, we set the program counter
 <0xff>s3

@@ -9,6 +9,7 @@ class Debug extends Bundle {
   val tapeOut = UInt(8.W)
   val instr = UInt(16.W)
   val counter = UInt(16.W)
+  val quit = Bool()
 }
 
 class Tappu(prog: String, debug: Boolean = false) extends Module {
@@ -26,7 +27,7 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
   val outReg = RegInit(0.U(8.W))
   io.out := outReg
 
-  val mem = Module(new TapeMemory(prog, 256))
+  val mem = Module(new TapeMemory(prog, 512))
   
 
   val instrStep = WireDefault(0.U(9.W))
@@ -46,6 +47,8 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
     io.dbg.get.instr := instr
     io.dbg.get.tapeOut := mem.io.outData
     io.dbg.get.counter := mem.io.counter
+    io.dbg.get.quit := false.B
+
   }
   
 
@@ -54,7 +57,7 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
   dataShift := 0.U
 
 
-  val execute::peripheral::Nil = Enum(2)
+  val execute::peripheral::halt::Nil = Enum(3)
 
   val state = RegInit(execute)
   //instrStep := Cat(1.U(1.W), 1.U(8.W))
@@ -90,11 +93,16 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
       when(instr(7,0) === Opcode.LoopStart.asUInt) {
       }
       when(instr(7,0) === Opcode.LoopEnd.asUInt) {
-        instrStep := Cat(1.U(1.W), instr(15,8))
+        when (!(mem.io.outData === 0.U)) {
+          instrStep := Cat(1.U(1.W), instr(15,8))
+        }
       }
       when(instr(7,0) === Opcode.AccStore.asUInt) {
       }
       when(instr(7,0) === Opcode.AccLoad.asUInt) {
+      }
+      when(instr(7,0) === Opcode.quit.asUInt) {
+        state := halt
       }
 
     }
@@ -103,6 +111,13 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
       // Await io then change state back to execute
 
       state := execute
+    }
+
+    is(halt) {
+      // Do nothing
+      if(debug){
+        io.dbg.get.quit := true.B
+      }
     }
   }
 

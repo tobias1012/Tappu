@@ -19,6 +19,7 @@ object Opcode extends Enumeration {
   val LoopEnd   = 0x80
   val AccStore  = 0x90
   val AccLoad   = 0xA0
+  val quit      = 0xFF
 
   def intToString(opcode: Type): String = opcode match {
     case Right     => "Right"
@@ -32,6 +33,7 @@ object Opcode extends Enumeration {
     case LoopEnd   => "LoopEnd"
     case AccStore  => "AccStore"
     case AccLoad   => "AccLoad"
+    case quit      => "QUIT"
   }
 }
 
@@ -63,6 +65,7 @@ class AssemblerParser extends RegexParsers {
       | "]" ^^ { _ => Opcode.LoopEnd } // Loop end
       | "s" ^^ { _ => Opcode.AccStore } // Accumulator Store
       | "l" ^^ { _ => Opcode.AccLoad } // Accumulator Load
+      | "q" ^^ { _ => Opcode.quit } // QUIT
   )
 
   def hexNumber: Parser[Int] = """0x[0-9A-Fa-f]{1,2}""".r ^^ { s => Integer.parseInt(s.drop(2), 16) }

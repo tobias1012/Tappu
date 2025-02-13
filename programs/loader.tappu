@@ -5,4 +5,4 @@
 // Create a counter and load the program
 <2+127[.-<0xff>2+<2]
 // Once we're done loading, we set the program counter
-<0xff>s3
+<0xff>s3q

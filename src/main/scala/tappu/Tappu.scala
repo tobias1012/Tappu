@@ -49,23 +49,18 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
   }
   
 
-  //wrEn := false.B
+  wrEn := false.B
   wrData := 0.U
   dataShift := 0.U
 
 
-  val fetch::execute::peripheral::Nil = Enum(3)
+  val execute::peripheral::Nil = Enum(2)
 
   val state = RegInit(execute)
   //instrStep := Cat(1.U(1.W), 1.U(8.W))
   instrStep := "b100000000".U
 
   switch(state) {
-    is(fetch) {
-      //Step one instruction
-      
-      state := execute
-    }
     is(execute) {
       //Only when read is starting
       when(instr(7,0) === Opcode.Read.asUInt) {
@@ -105,9 +100,9 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
     }
 
     is(peripheral) {
-      // Await io then change state back to fetch
+      // Await io then change state back to execute
 
-      state := fetch
+      state := execute
     }
   }
 

@@ -20,7 +20,7 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
   it should "print 1,2,3" in {
     test(new Tappu("./programs/reader.tappu", debug = true)){ dut =>      
       //Input a program, that reads its own bytes
-      for(i <- 1 to 11){
+      for(i <- 1 to 13){
         println("Current cycle: " + i)
         println("OUTPUT: " + dut.io.out.peek().litValue)
         println("Current Tape value: " + dut.io.dbg.get.tapeOut.peek().litValue)

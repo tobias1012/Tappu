@@ -19,6 +19,20 @@ object Opcode extends Enumeration {
   val LoopEnd   = 0x80
   val AccStore  = 0x90
   val AccLoad   = 0xA0
+
+  def intToString(opcode: Type): String = opcode match {
+    case Right     => "Right"
+    case Left      => "Left"
+    case Add       => "Add"
+    case Sub       => "Sub"
+    case Set       => "Set"
+    case Print     => "Print"
+    case Read      => "Read"
+    case LoopStart => "LoopStart"
+    case LoopEnd   => "LoopEnd"
+    case AccStore  => "AccStore"
+    case AccLoad   => "AccLoad"
+  }
 }
 
 

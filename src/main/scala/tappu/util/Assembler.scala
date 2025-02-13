@@ -3,6 +3,7 @@ package tappu.util
 import scala.io.Source
 import scala.util.control.Breaks._
 import scala.util.parsing.combinator._
+import scala.collection.mutable.Stack
 
 
 object Opcode extends Enumeration {
@@ -29,27 +30,44 @@ class Instruction(opcodeVal: Opcode.Type, dataVal: Int) {
 }
 
 class AssemblerParser extends RegexParsers {
+  var instructionCounter = 0
+  var loopStartPositions = Stack[Int]()
+
   def comment: Parser[String] = """//.*""".r ^^ { _.toString }
-  def opcode: Parser[Opcode.Type] =(  ">" ^^ { _=> Opcode.Right } //Right 
-                                        | "<" ^^ { _ => Opcode.Left } //Left
-                                        | "+" ^^ { _ => Opcode.Add } //Add
-                                        | "-" ^^ { _ => Opcode.Sub } //Sub
-                                        | ":" ^^ { _ => Opcode.Set } //Set
-                                        | "." ^^ { _ => Opcode.Print } //Print
-                                        | "," ^^ { _ => Opcode.Read } //Read
-                                        | "[" ^^ { _ => Opcode.LoopStart } //Loop start
-                                        | "]" ^^ { _ => Opcode.LoopEnd } //Loop end
-                                        | "s" ^^ { _ => Opcode.AccStore} //Accumulator Store
-                                        | "l" ^^ { _ => Opcode.AccLoad} //Accumulator Load
-                                        )
+  def opcode: Parser[Opcode.Type] = (
+    ">" ^^ { _ => Opcode.Right } // Right
+      | "<" ^^ { _ => Opcode.Left } // Left
+      | "+" ^^ { _ => Opcode.Add } // Add
+      | "-" ^^ { _ => Opcode.Sub } // Sub
+      | ":" ^^ { _ => Opcode.Set } // Set
+      | "." ^^ { _ => Opcode.Print } // Print
+      | "," ^^ { _ => Opcode.Read } // Read
+      | "[" ^^ { _ =>
+        loopStartPositions = loopStartPositions.push(instructionCounter)
+        Opcode.LoopStart
+      } // Loop start
+      | "]" ^^ { _ => Opcode.LoopEnd } // Loop end
+      | "s" ^^ { _ => Opcode.AccStore } // Accumulator Store
+      | "l" ^^ { _ => Opcode.AccLoad } // Accumulator Load
+  )
 
   def hexNumber: Parser[Int] = """0x[0-9A-Fa-f]{1,2}""".r ^^ { s => Integer.parseInt(s.drop(2), 16) }
   def number: Parser[Int] = hexNumber | """\d{1,3}""".r ^^ { _.toInt }
-  
-  def instruction: Parser[Instruction] = opcode ~ opt(number) ^^ { case o ~ d => new Instruction(o, d.getOrElse(1)) }
 
+  def instruction: Parser[Instruction] = opcode ~ opt(number) ^^ { case o ~ d =>
+    instructionCounter += 1
+    if (o == Opcode.LoopEnd) {
+      if (loopStartPositions.isEmpty) {
+        throw new Exception("Loop end without start")
+      }
+      val start = loopStartPositions.pop() + 1 
+      val jump = instructionCounter - start
+      new Instruction(o, jump)
+    } else
+    new Instruction(o, d.getOrElse(1))
+  }
 
-  def program: Parser[List[Instruction]] = opt(rep(comment)) ~ phrase(rep(instruction ~ opt(comment) ^^ { case  i ~ c2 => i })) ^^ { case _ ~ l => l }
+  def program: Parser[List[Instruction]] = opt(rep(comment)) ~ phrase(rep(instruction ~ opt(comment) ^^ { case i ~ c2 => i })) ^^ { case _ ~ l => l }
 }
 
 object Assembler extends  AssemblerParser{

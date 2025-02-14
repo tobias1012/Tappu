@@ -17,7 +17,7 @@ class TapeMemory(programPath: String, size: Int) extends Module {
     val counter = Output(UInt(16.W))
   })
 
-  val program = VecInit(Assembler.asm(programPath).flatMap( i => List(i.opcode, i.data).map(_.U)))
+  val program = Assembler.asm(programPath).flatMap( i => List(i.opcode, i.data).map(_.U))
 
 
   val tapeCounterReg = RegInit(0.U(16.W))
@@ -33,8 +33,9 @@ class TapeMemory(programPath: String, size: Int) extends Module {
   val registerNum = 3
   val fullTapeSize = size + registerNum
 
-  val tape = Mem(fullTapeSize, UInt(8.W))
+  val tape = SyncReadMem(fullTapeSize, UInt(8.W))
   //Write the data on the tape
+  //TODO: This is horrible and does not work, i need to bootstrap the memory so that the program is loaded at the start, i also need to zero out the rest of the memory for the asic
   for (i <- 0 until program.length) {
     tape(i+registerNum) := program(i)
   }

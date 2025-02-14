@@ -40,7 +40,7 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
     }
   }
   it should "print 1,2,3" in {
-    test(new Tappu("./programs/reader.tappu", debug = true)){ dut =>      
+    test(new Tappu("./programs/reader.tappu", debug = true)){ dut =>  
       //Input a program, that writes 1,2,3
       val vals = List(1,2,3)
       var found = 0
@@ -52,6 +52,7 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
         if(instr(7,0).litValue.toInt == Opcode.Print){
           dut.io.dbg.get.tapeOut.expect(vals(found).U)
           found += 1
+          println("Found: " + found)
         }
         //println("Instr: " + Opcode.intToString(instr(7,0).litValue.toInt) + " 0x" + instr(15,8).litValue.toInt.toHexString)
         //println("Counter: " + dut.io.dbg.get.counter.peek().litValue)
@@ -62,7 +63,8 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
     }
   }
   it should "run a loop correctly" in {
-    test(new Tappu("./programs/loopTest.tappu", debug = true)){ dut =>      
+    test(new Tappu("./programs/loopTest.tappu", debug = true)){ dut =>  
+      dut.clock.setTimeout(0)    
       //Input a program, that reads its own bytes
       var run = true
       while(run){

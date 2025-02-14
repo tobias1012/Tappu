@@ -28,9 +28,7 @@ class TapeMemory(programPath: String, size: Int) extends Module {
   val nextPc = Wire(UInt(16.W))
 
   // Programcounter at tape(1,0)
-  // Readpointer at tape(2)
-  // Accumulator at tape(3)
-  val registerNum = 3
+  val registerNum = 2
   val fullTapeSize = size + registerNum
 
   val tape = SyncReadMem(fullTapeSize, UInt(8.W))

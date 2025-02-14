@@ -17,8 +17,8 @@ object Opcode extends Enumeration {
   val Read      = 0x60
   val LoopStart = 0x70
   val LoopEnd   = 0x80
-  val AccStore  = 0x90
-  val AccLoad   = 0xA0
+  //val AccStore  = 0x90
+  //val AccLoad   = 0xA0
   val NOP       = 0xB0
   val quit      = 0xFF
 
@@ -32,8 +32,8 @@ object Opcode extends Enumeration {
     case Read      => "Read"
     case LoopStart => "LoopStart"
     case LoopEnd   => "LoopEnd"
-    case AccStore  => "AccStore"
-    case AccLoad   => "AccLoad"
+    //case AccStore  => "AccStore"
+    //case AccLoad   => "AccLoad"
     case NOP       => "NOP"
     case quit      => "QUIT"
   }
@@ -62,8 +62,8 @@ class AssemblerParser extends RegexParsers {
         Opcode.LoopStart
       } // Loop start
       | "]" ^^ { _ => Opcode.LoopEnd } // Loop end
-      | "s" ^^ { _ => Opcode.AccStore } // Accumulator Store
-      | "l" ^^ { _ => Opcode.AccLoad } // Accumulator Load
+      //| "s" ^^ { _ => Opcode.AccStore } // Accumulator Store
+      //| "l" ^^ { _ => Opcode.AccLoad } // Accumulator Load
       | "n" ^^ { _ => Opcode.NOP } // NOP
       | "q" ^^ { _ => Opcode.quit } // QUIT
   )

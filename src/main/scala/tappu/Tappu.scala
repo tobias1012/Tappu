@@ -97,10 +97,6 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
           instrStep := Cat(1.U(1.W), instr(15,8))
         }
       }
-      when(instr(7,0) === Opcode.AccStore.asUInt) {
-      }
-      when(instr(7,0) === Opcode.AccLoad.asUInt) {
-      }
       when(instr(7,0) === Opcode.quit.asUInt) {
         state := halt
       }

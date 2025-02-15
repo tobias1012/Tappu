@@ -57,13 +57,23 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
   dataShift := 0.U
 
 
-  val execute::peripheral::halt::Nil = Enum(3)
+  val execute::fetch::fetchInstruction::peripheral::halt::Nil = Enum(5)
 
   val state = RegInit(execute)
   //instrStep := Cat(1.U(1.W), 1.U(8.W))
-  instrStep := "b100000000".U
+  
 
   switch(state) {
+    is (fetchInstruction) {
+      // Fetch instruction from memory
+      instrStep := "b100000000".U
+      state := execute
+    }
+    is(fetch) {
+      // Fetch instruction from memory
+      instrStep := 0.U(9.W)
+      state := fetchInstruction
+    }
     is(execute) {
       //Only when read is starting
       when(instr(7,0) === Opcode.Read.asUInt) {
@@ -71,31 +81,42 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
       }
       when(instr(7,0) === Opcode.Print.asUInt) {
         outReg := mem.io.outData
+        state := fetch
       }
       when(instr(7,0) === Opcode.Right.asUInt) {
         dataShift := Cat(0.U(1.W), instr(15,8))
+        state := fetch
+
       }
       when(instr(7,0) === Opcode.Left.asUInt) {
         dataShift := Cat(1.U(1.W), instr(15,8))
+        state := fetch
+
       }
       when(instr(7,0) === Opcode.Add.asUInt) {
         mem.io.wrEn := true.B
         wrData := Cat(0.U(1.W), instr(15,8))
+        state := fetch
       }
       when(instr(7,0) === Opcode.Sub.asUInt) {
         wrEn := true.B
         wrData := Cat(1.U, instr(15,8))
+        state := fetch
+
       }
       when(instr(7,0) === Opcode.Set.asUInt) {
         wrEn := true.B
         wrData := Cat(0.U, instr(15,8))
+        state := fetch
       }
       when(instr(7,0) === Opcode.LoopStart.asUInt) {
+        state := fetch
       }
       when(instr(7,0) === Opcode.LoopEnd.asUInt) {
         when (!(mem.io.outData === 0.U)) {
           instrStep := Cat(1.U(1.W), instr(15,8))
         }
+        state := fetch
       }
       when(instr(7,0) === Opcode.quit.asUInt) {
         state := halt
@@ -106,7 +127,7 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
     is(peripheral) {
       // Await io then change state back to execute
 
-      state := execute
+      state := fetch
     }
 
     is(halt) {

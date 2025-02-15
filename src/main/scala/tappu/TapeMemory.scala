@@ -55,7 +55,7 @@ class TapeMemory(programPath: String, size: Int) extends Module {
     }
   }
 
-  val readData = RegNext(tape.read(tapeCounterReg)) // Store read data in a register
+  val readData = tape.read(tapeCounterReg)
 
   when(io.wrEn) {
     tape.write(tapeCounterReg, Mux(io.wrData(8) === 0.U, readData + io.wrData(7,0), readData - io.wrData(7,0)))

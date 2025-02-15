@@ -6,3 +6,7 @@ target/
 .vscode/
 .bloop/
 .metals/
+/Tappu/
+Tappu.sv
+*.mem
+.bsp/

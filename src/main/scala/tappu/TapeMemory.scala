@@ -2,7 +2,12 @@ package tappu
 
 import chisel3._
 import chisel3.util._
+//Initialize memory with experimental feature
+import chisel3.util.experimental.loadMemoryFromFile
+
+
 import tappu.util._
+import tappu.Compiler.compile
 
 class TapeMemory(programPath: String, size: Int) extends Module {
   val io = IO(new Bundle {
@@ -15,71 +20,72 @@ class TapeMemory(programPath: String, size: Int) extends Module {
     val instr = Output(UInt(16.W))
 
     val counter = Output(UInt(16.W))
+    //val memBusy = Output(Bool())
   })
 
-  val program = Assembler.asm(programPath).flatMap( i => List(i.opcode, i.data).map(_.U))
 
 
   val tapeCounterReg = RegInit(0.U(16.W))
-
   io.counter := tapeCounterReg
 
   val pc = RegInit(0.U(16.W))
   val nextPc = Wire(UInt(16.W))
+  val pcReg = RegNext(pc)       // Holds previous PC
+
 
   // Programcounter at tape(1,0)
   val registerNum = 2
-  val fullTapeSize = size + registerNum
 
-  val tape = SyncReadMem(fullTapeSize, UInt(8.W))
+  val tape = SyncReadMem(size, UInt(8.W))
   //Write the data on the tape
-  //TODO: This is horrible and does not work, i need to bootstrap the memory so that the program is loaded at the start, i also need to zero out the rest of the memory for the asic
-  for (i <- 0 until program.length) {
-    tape(i+registerNum) := program(i)
-  }
 
-  //tapeCounterReg := program.length.U
-  //tape(0) := 0.U
-  //tape(1) := 0.U
-  //tape(2) := tape(0)
+  val memPath = compile(programPath, "tappuCPU.mem", size)
+  loadMemoryFromFile(tape, memPath)
   
+  //val idle::readInstr::updatePc::writeMem::Nil = Enum(4)
+  //val memState = RegInit(idle)
+
+
   //When we shift the data
-  when(!(io.dataShift === 0.U)) {
+  when(io.dataShift =/= 0.U) {
     when(io.dataShift(8) === 0.U) {
       tapeCounterReg := Mux(tapeCounterReg + io.dataShift(7,0) > 255.U, 255.U, tapeCounterReg + io.dataShift(7,0))
-    }
-    when(io.dataShift(8) === 1.U) {
+    } .otherwise {
       tapeCounterReg := Mux(tapeCounterReg - io.dataShift(7,0) < 0.U, 0.U, tapeCounterReg - io.dataShift(7,0))
     }
   }
 
+  val readData = RegNext(tape.read(tapeCounterReg)) // Store read data in a register
+
   when(io.wrEn) {
-    //tape(tapeCounterReg) := 1.U
-    tape(tapeCounterReg) := Mux(io.wrData(8) === 0.U, tape(tapeCounterReg) + io.wrData(7,0), tape(tapeCounterReg) - io.wrData(7,0))
-    
+    tape.write(tapeCounterReg, Mux(io.wrData(8) === 0.U, readData + io.wrData(7,0), readData - io.wrData(7,0)))
   }
+  
+  val pcLow  = RegNext(tape.read(0.U)) // Delay PC low byte read
+  val pcHigh = RegNext(tape.read(1.U)) // Delay PC high byte read
+  pc := Cat(pcHigh, pcLow) // Construct 16-bit PC
 
+  // Fetch instruction as little-endian
+  val instrLow  = RegNext(tape.read(pcReg + registerNum.U))
+  val instrHigh = RegNext(tape.read(pcReg + 1.U + registerNum.U))
+  io.instr := Cat(instrHigh, instrLow)
 
-  //Load instructions as little endian
-  pc := Cat(tape(1), tape(0))
-  io.instr := Cat(tape( pc + 1.U + registerNum.U ), tape( pc + registerNum.U))
-  io.outData := tape(tapeCounterReg)
-
+  io.outData := readData // Output latest read data
 
   //increment the pc
   nextPc := 0.U
   when(io.instrStep(8) === 1.U) {
     when(io.instrStep(7,0) === 0.U) {
-      //add two to account for the argument
-      nextPc := pc + 2.U
-    }.otherwise {
-      //pc - offset * 2
-      nextPc := pc - (io.instrStep(7,0) + io.instrStep(7,0))
+      nextPc := pc + 2.U  // Move forward by 2 (next instruction)
+    } .otherwise {
+      nextPc := pc - (io.instrStep(7,0) << 1) // Move backward by offset * 2
     }
     pc := nextPc
-    tape(0) := pc(7,0)
-    tape(1) := pc(15,8)
+  }
 
-
+  // Delayed PC write-back to memory (safe)
+  when(io.instrStep(8) === 1.U) {
+    tape.write(0.U, nextPc(7,0))
+    tape.write(1.U, nextPc(15,8))
   }
 }

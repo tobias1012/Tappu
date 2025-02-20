@@ -35,6 +35,9 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
   val wrEn = WireDefault(false.B)
   val wrData = Wire(UInt(9.W))
   val dataShift = Wire(UInt(9.W))
+
+  val instrStepReg = RegInit("b100000000".U(9.W))
+
   
   mem.io.instrStep := instrStep
   instr := mem.io.instr
@@ -55,89 +58,76 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
   wrEn := false.B
   wrData := 0.U
   dataShift := 0.U
+  instrStepReg := "b100000000".U
 
+  val instrFetch::instrDec::execute::memAcc::writeBack::halt::Nil = Enum(6)
+  val cpuState = RegInit(instrFetch)
 
-  val execute::fetch::fetchInstruction::peripheral::halt::Nil = Enum(5)
-
-  val state = RegInit(execute)
-  //instrStep := Cat(1.U(1.W), 1.U(8.W))
-  
-
-  switch(state) {
-    is (fetchInstruction) {
-      // Fetch instruction from memory
-      instrStep := "b100000000".U
-      state := execute
+  switch(cpuState) {
+    is (instrFetch) { // Instruction fetch
+      instrStep := instrStepReg
+      cpuState := instrDec
     }
-    is(fetch) {
-      // Fetch instruction from memory
-      instrStep := 0.U(9.W)
-      state := fetchInstruction
+    is (instrDec) { // Instruction decode
+      cpuState := execute
     }
-    is(execute) {
-      //Only when read is starting
-      when(instr(7,0) === Opcode.Read.asUInt) {
-        state := peripheral
-      }
-      when(instr(7,0) === Opcode.Print.asUInt) {
-        outReg := mem.io.outData
-        state := fetch
-      }
-      when(instr(7,0) === Opcode.Right.asUInt) {
-        dataShift := Cat(0.U(1.W), instr(15,8))
-        state := fetch
+    is (execute) { // Execute
+      cpuState := memAcc
 
-      }
-      when(instr(7,0) === Opcode.Left.asUInt) {
-        dataShift := Cat(1.U(1.W), instr(15,8))
-        state := fetch
-
-      }
-      when(instr(7,0) === Opcode.Add.asUInt) {
-        mem.io.wrEn := true.B
-        wrData := Cat(0.U(1.W), instr(15,8))
-        state := fetch
-      }
-      when(instr(7,0) === Opcode.Sub.asUInt) {
-        wrEn := true.B
-        wrData := Cat(1.U, instr(15,8))
-        state := fetch
-
-      }
-      when(instr(7,0) === Opcode.Set.asUInt) {
-        wrEn := true.B
-        wrData := Cat(0.U, instr(15,8))
-        state := fetch
-      }
-      when(instr(7,0) === Opcode.LoopStart.asUInt) {
-        state := fetch
-      }
-      when(instr(7,0) === Opcode.LoopEnd.asUInt) {
-        when (!(mem.io.outData === 0.U)) {
-          instrStep := Cat(1.U(1.W), instr(15,8))
+      switch(instr(7,0)) {
+        is(Opcode.Read.asUInt) {
+          // Nothing to do right now.
         }
-        state := fetch
+        is(Opcode.Print.asUInt) {
+          outReg := mem.io.outData
+        }
+        is(Opcode.Left.asUInt) {
+          dataShift := Cat(1.U(1.W), instr(15,8))
+        }
+        is(Opcode.Right.asUInt) {
+          dataShift := Cat(0.U(1.W), instr(15,8))
+        }
+        is(Opcode.Add.asUInt) {
+          wrEn := true.B
+          wrData := Cat(0.U(1.W), instr(15,8))
+        }
+        is(Opcode.Sub.asUInt) {
+          wrEn := true.B
+          wrData := Cat(1.U(1.W), instr(15,8))
+        }
+        is(Opcode.Set.asUInt) { //TODO: ** NOT WORKING **
+          wrEn := true.B
+          wrData := Cat(0.U(1.W), instr(15,8))
+        }
+        is(Opcode.LoopStart.asUInt) {
+          // Nothing to do right now.
+        }
+        is(Opcode.LoopEnd.asUInt) {
+          when (!(mem.io.outData === 0.U)) {
+            instrStepReg := Cat(1.U(1.W), instr(15,8))
+          }
+        }
+        is(Opcode.quit.asUInt) {
+          if(debug){
+            io.dbg.get.quit := true.B
+          }
+          cpuState := halt
+        }
       }
-      when(instr(7,0) === Opcode.quit.asUInt) {
-        state := halt
-      }
+      
 
     }
-
-    is(peripheral) {
-      // Await io then change state back to execute
-
-      state := fetch
+    is (memAcc) { // Memory access
+      cpuState := writeBack
     }
+    is (writeBack) { // Write back
 
-    is(halt) {
+      cpuState := instrFetch
+    }
+    is (halt) { // Halt
       // Do nothing
-      if(debug){
-        io.dbg.get.quit := true.B
-      }
     }
   }
-
 
   io.out := outReg
 }
@@ -145,6 +135,6 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
 object TappuMain {
   def main(args: Array[String]): Unit = {
     println("Generating Tappu")
-    emitVerilog(new Tappu(args(0)))
+    emitVerilog(new Tappu(args(0), true))
   }
 }

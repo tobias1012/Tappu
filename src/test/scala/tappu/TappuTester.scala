@@ -13,7 +13,7 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
   behavior of "Tappu"
   it should "run a simple program" in {
     test(new Tappu("./programs/helloworld.tappu", debug=true)){ dut =>
-      dut.clock.setTimeout(0)
+      //dut.clock.setTimeout(0)
       var max_iter = 1000
       var success_string = "Hello World"
       var seen_string = ""
@@ -64,7 +64,7 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
   }
   it should "run a loop correctly" in {
     test(new Tappu("./programs/loopTest.tappu", debug = true)){ dut =>  
-      dut.clock.setTimeout(0)    
+      //dut.clock.setTimeout(0)    
       //Input a program, that reads its own bytes
       var run = true
       while(run){

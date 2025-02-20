@@ -61,13 +61,13 @@ class TapeMemory(programPath: String, size: Int) extends Module {
     tape.write(tapeCounterReg, Mux(io.wrData(8) === 0.U, readData + io.wrData(7,0), readData - io.wrData(7,0)))
   }
   
-  val pcLow  = RegNext(tape.read(0.U)) // Delay PC low byte read
-  val pcHigh = RegNext(tape.read(1.U)) // Delay PC high byte read
+  val pcLow  = tape.read(0.U)
+  val pcHigh = tape.read(1.U)
   pc := Cat(pcHigh, pcLow) // Construct 16-bit PC
 
   // Fetch instruction as little-endian
-  val instrLow  = RegNext(tape.read(pcReg + registerNum.U))
-  val instrHigh = RegNext(tape.read(pcReg + 1.U + registerNum.U))
+  val instrLow  = tape.read(pcReg + registerNum.U)
+  val instrHigh = tape.read(pcReg + 1.U + registerNum.U)
   io.instr := Cat(instrHigh, instrLow)
 
   io.outData := readData // Output latest read data

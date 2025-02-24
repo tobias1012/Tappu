@@ -13,11 +13,13 @@ object Compiler {
       s
     }
   }
-
+  def compile_seq(programPath: String): Seq[Int] = {
+    var programSeq = Assembler.asm(programPath).flatMap( i => List(i.opcode, i.data)).map(_.toInt)
+    programSeq
+  }
   def compile(programPath: String, outPath: String, memorySize: Int): String = {
-    var program = Assembler.asm(programPath).flatMap( i => List(i.opcode, i.data).map(d => "0x" + pad(d.toHexString,2) + "\n"))
     val outFile = new File(outPath)
-
+    var program = compile_seq(programPath).map(d => "0x" + pad(d.toHexString,2) + "\n")
     //add initialization zeroing out the memory
     val memorySize = 512
     //add the buffer for pc at the start

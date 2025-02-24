@@ -10,9 +10,14 @@ import tappu.util.Opcode
 
 class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
   //Find some tests to run
+  val options = new Options {
+    debug = true
+    vecMem = true
+  }
+
   behavior of "Tappu"
   it should "run a simple program" in {
-    test(new Tappu("./programs/helloworld.tappu", debug=true)){ dut =>
+    test(new Tappu("./programs/helloworld.tappu", options)){ dut =>
       //dut.clock.setTimeout(0)
       var max_iter = 1000
       var success_string = "Hello World"
@@ -40,7 +45,7 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
     }
   }
   it should "print 1,2,3" in {
-    test(new Tappu("./programs/reader.tappu", debug = true)){ dut =>  
+    test(new Tappu("./programs/reader.tappu", options)){ dut =>  
       //Input a program, that writes 1,2,3
       val vals = List(1,2,3)
       var found = 0
@@ -63,16 +68,16 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
     }
   }
   it should "run a loop correctly" in {
-    test(new Tappu("./programs/loopTest.tappu", debug = true)){ dut =>  
+    test(new Tappu("./programs/loopTest.tappu", options)){ dut =>  
       //dut.clock.setTimeout(0)    
       //Input a program, that reads its own bytes
       var run = true
       while(run){
         //println("######################")
         //println("OUTPUT: " + dut.io.out.peek().litValue)
-        //println("Current Tape value: " + dut.io.dbg.get.tapeOut.peek().litValue)
-        //val instr = dut.io.dbg.get.instr.peek()
-        //println("Instr: " + Opcode.intToString(instr(7,0).litValue.toInt) + " 0x" + instr(15,8).litValue.toInt.toHexString)
+        println("Current Tape value: " + dut.io.dbg.get.tapeOut.peek().litValue)
+        val instr = dut.io.dbg.get.instr.peek()
+        println("Instr: " + Opcode.intToString(instr(7,0).litValue.toInt) + " 0x" + instr(15,8).litValue.toInt.toHexString)
         //println("Counter: " + dut.io.dbg.get.counter.peek().litValue)
         
         if(dut.io.dbg.get.quit.peek().litToBoolean){

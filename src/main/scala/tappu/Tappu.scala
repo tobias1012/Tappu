@@ -5,6 +5,12 @@ import chisel3.util._
 
 import tappu.util._
 
+class Options {
+  var debug = false
+  var uartMem = false
+  var vecMem = false
+}
+
 class Debug extends Bundle {
   val tapeOut = UInt(8.W)
   val instr = UInt(16.W)
@@ -12,12 +18,12 @@ class Debug extends Bundle {
   val quit = Bool()
 }
 
-class Tappu(prog: String, debug: Boolean = false) extends Module {
+class Tappu(prog: String, options: Options = new Options()) extends Module {
   val io = IO(new Bundle {
     val in = Input(UInt(8.W))
     val out = Output(UInt(8.W))
 
-    val dbg = if (debug) Some(Output(new Debug)) else None
+    val dbg = if (options.debug) Some(Output(new Debug)) else None
   })
 
 
@@ -26,9 +32,12 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
 
   val outReg = RegInit(0.U(8.W))
   io.out := outReg
-
-  val mem = Module(new TapeMemory(prog, 512))
   
+  val mem = if(options.vecMem) {
+    Module(new TapeVecMemory(prog, 3))
+  } else {
+    Module(new TapeMemory(prog, 512))
+  }
 
   val instrStep = WireDefault(0.U(9.W))
   val instr = Wire(UInt(16.W))
@@ -46,7 +55,7 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
   mem.io.wrData := wrData
   mem.io.dataShift := dataShift
 
-  if(debug){
+  if(options.debug){
     io.dbg.get.instr := instr
     io.dbg.get.tapeOut := mem.io.outData
     io.dbg.get.counter := mem.io.counter
@@ -108,7 +117,7 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
           }
         }
         is(Opcode.quit.asUInt) {
-          if(debug){
+          if(options.debug){
             io.dbg.get.quit := true.B
           }
           cpuState := halt
@@ -135,6 +144,10 @@ class Tappu(prog: String, debug: Boolean = false) extends Module {
 object TappuMain {
   def main(args: Array[String]): Unit = {
     println("Generating Tappu")
-    emitVerilog(new Tappu(args(0), true))
+    val options = new Options {
+      debug = true
+      vecMem = true
+    }
+    emitVerilog(new Tappu(args(0), options))
   }
 }

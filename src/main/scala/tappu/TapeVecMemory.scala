@@ -18,8 +18,7 @@ class TapeVecMemory(programPath: String, size: Int) extends TapeAbstract(program
   val init :: ready :: Nil = Enum(2)
   val state = RegInit(init)
   val tapeCounterReg = RegInit(0.U(16.W))
-  val pc = RegInit(0.U(16.W))
-  
+  val pc = RegInit(0.U(16.W))  
 
     io.counter := tapeCounterReg
     io.instr := 0.U
@@ -40,11 +39,11 @@ class TapeVecMemory(programPath: String, size: Int) extends TapeAbstract(program
     is(ready){
       when(io.dataShift =/= 0.U) {
         when(io.dataShift(8) === 0.U) {
-          tapeCounterReg := Mux(tapeCounterReg + io.dataShift(7,0) > 255.U, 255.U, tapeCounterReg + io.dataShift(7,0))
+            tapeCounterReg := Mux(tapeCounterReg + io.dataShift(7,0) >= size.U, (size - 1).U, tapeCounterReg + io.dataShift(7,0))
         } .otherwise {
-          tapeCounterReg := Mux(tapeCounterReg - io.dataShift(7,0) < 0.U, 0.U, tapeCounterReg - io.dataShift(7,0))
+            tapeCounterReg := Mux(io.dataShift(7,0) >= tapeCounterReg, 0.U, tapeCounterReg - io.dataShift(7,0))
         }
-      }
+    }
       val readData = tape.read(tapeCounterReg)
       when(io.wrEn) {
         tape.write(tapeCounterReg, Mux(io.wrData(8) === 0.U, readData + io.wrData(7,0), readData - io.wrData(7,0)))
@@ -62,7 +61,6 @@ class TapeVecMemory(programPath: String, size: Int) extends TapeAbstract(program
           pc := pc - (io.instrStep(7,0) << 1) // Move backward by offset * 2
         }
       }
-    
     }
   }
 

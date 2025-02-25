@@ -69,15 +69,15 @@ class TappuTester extends AnyFlatSpec with ChiselScalatestTester{
   }
   it should "run a loop correctly" in {
     test(new Tappu("./programs/loopTest.tappu", options)){ dut =>  
-      //dut.clock.setTimeout(0)    
+      dut.clock.setTimeout(10_000)    
       //Input a program, that reads its own bytes
       var run = true
       while(run){
         //println("######################")
         //println("OUTPUT: " + dut.io.out.peek().litValue)
-        println("Current Tape value: " + dut.io.dbg.get.tapeOut.peek().litValue)
-        val instr = dut.io.dbg.get.instr.peek()
-        println("Instr: " + Opcode.intToString(instr(7,0).litValue.toInt) + " 0x" + instr(15,8).litValue.toInt.toHexString)
+        //println("Current Tape value: " + dut.io.dbg.get.tapeOut.peek().litValue)
+        //val instr = dut.io.dbg.get.instr.peek()
+        //println("Instr: " + Opcode.intToString(instr(7,0).litValue.toInt) + " 0x" + instr(15,8).litValue.toInt.toHexString)
         //println("Counter: " + dut.io.dbg.get.counter.peek().litValue)
         
         if(dut.io.dbg.get.quit.peek().litToBoolean){

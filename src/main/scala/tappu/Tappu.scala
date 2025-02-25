@@ -114,6 +114,7 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
         is(Opcode.LoopEnd.asUInt) {
           when (!(mem.io.outData === 0.U)) {
             instrStepReg := Cat(1.U(1.W), instr(15,8))
+            cpuState := instrFetch
           }
         }
         is(Opcode.quit.asUInt) {

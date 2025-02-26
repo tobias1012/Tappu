@@ -46,7 +46,7 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
 
   val instrStep = WireDefault(0.U(9.W))
   val instr = Wire(UInt(16.W))
-  val wrEn = WireDefault(false.B)
+  val wrMode = WireDefault(WrMode.none)
   val wrData = Wire(UInt(9.W))
   val dataShift = Wire(UInt(9.W))
 
@@ -56,7 +56,7 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
   mem.io.instrStep := instrStep
   instr := mem.io.instr
   
-  mem.io.wrEn := wrEn
+  mem.io.wrMode := wrMode
   mem.io.wrData := wrData
   mem.io.dataShift := dataShift
 
@@ -68,8 +68,8 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
 
   }
   
-
-  wrEn := false.B
+  // Defaults
+  wrMode := WrMode.none
   wrData := 0.U
   dataShift := 0.U
   instrStepReg := "b100000000".U
@@ -90,6 +90,8 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
       switch(instr(7,0)) {
         is(Opcode.Read.asUInt) {
           // Nothing to do right now.
+          wrMode := WrMode.set
+          wrData := inReg
         }
         is(Opcode.Print.asUInt) {
           outReg := mem.io.outData
@@ -101,12 +103,12 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
           dataShift := Cat(0.U(1.W), instr(15,8))
         }
         is(Opcode.Add.asUInt) {
-          wrEn := true.B
-          wrData := Cat(0.U(1.W), instr(15,8))
+          wrMode := WrMode.plus
+          wrData := instr(15,8)
         }
         is(Opcode.Sub.asUInt) {
-          wrEn := true.B
-          wrData := Cat(1.U(1.W), instr(15,8))
+          wrMode := WrMode.minus
+          wrData := instr(15,8)
         }
         is(Opcode.LoopStart.asUInt) {
           // Nothing to do right now.

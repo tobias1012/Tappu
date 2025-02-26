@@ -42,8 +42,14 @@ class TapeMemory(programPath: String, size: Int) extends TapeAbstract(programPat
 
   val readData = tape.read(tapeCounterReg)
 
-  when(io.wrEn) {
-    tape.write(tapeCounterReg, Mux(io.wrData(8) === 0.U, readData + io.wrData(7,0), readData - io.wrData(7,0)))
+  when(io.wrMode =/= WrMode.none) {
+    when(io.wrMode === WrMode.plus) {
+      tape.write(tapeCounterReg, Mux(readData + io.wrData > 255.U, 255.U, readData + io.wrData))
+    } .elsewhen(io.wrMode === WrMode.minus) {
+      tape.write(tapeCounterReg, Mux(readData < io.wrData, 0.U, readData - io.wrData))
+    } .elsewhen(io.wrMode === WrMode.set) {
+      tape.write(tapeCounterReg, io.wrData)
+    }
   }
   
   val pcLow  = tape.read(0.U)

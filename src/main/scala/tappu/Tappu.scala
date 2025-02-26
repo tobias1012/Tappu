@@ -6,9 +6,14 @@ import chisel3.util._
 import tappu.util._
 
 class Options {
+  // Memory options
+  // Default is all synchronous memories, this allows polymorphic programs
+  var uartMem = false //TOdO: Implement
+  var vecMem = false // Vec mem implements a ROM for the program, the tape is reserved for program data
+
+  // Debugging options
   var debug = false
-  var uartMem = false
-  var vecMem = false
+  var uartDebug = false //TODO: Implement
 }
 
 class Debug extends Bundle {
@@ -82,7 +87,6 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
     }
     is (execute) { // Execute
       cpuState := memAcc
-
       switch(instr(7,0)) {
         is(Opcode.Read.asUInt) {
           // Nothing to do right now.
@@ -103,10 +107,6 @@ class Tappu(prog: String, options: Options = new Options()) extends Module {
         is(Opcode.Sub.asUInt) {
           wrEn := true.B
           wrData := Cat(1.U(1.W), instr(15,8))
-        }
-        is(Opcode.Set.asUInt) { //TODO: ** NOT WORKING **
-          wrEn := true.B
-          wrData := Cat(0.U(1.W), instr(15,8))
         }
         is(Opcode.LoopStart.asUInt) {
           // Nothing to do right now.
@@ -146,7 +146,7 @@ object TappuMain {
   def main(args: Array[String]): Unit = {
     println("Generating Tappu")
     val options = new Options {
-      debug = true
+      debug = false
       vecMem = true
     }
     emitVerilog(new Tappu(args(0), options))

@@ -12,7 +12,7 @@ object Opcode extends Enumeration {
   val Left      = 0x10
   val Add       = 0x20
   val Sub       = 0x30
-  val Set       = 0x40
+  //val Set       = 0x40
   val Print     = 0x50
   val Read      = 0x60
   val LoopStart = 0x70
@@ -27,7 +27,7 @@ object Opcode extends Enumeration {
     case Left      => "Left"
     case Add       => "Add"
     case Sub       => "Sub"
-    case Set       => "Set"
+    //case Set       => "Set"
     case Print     => "Print"
     case Read      => "Read"
     case LoopStart => "LoopStart"
@@ -54,7 +54,7 @@ class AssemblerParser extends RegexParsers {
       | "<" ^^ { _ => Opcode.Left } // Left
       | "+" ^^ { _ => Opcode.Add } // Add
       | "-" ^^ { _ => Opcode.Sub } // Sub
-      | ":" ^^ { _ => Opcode.Set } // Set
+      //| ":" ^^ { _ => Opcode.Set } // Set
       | "." ^^ { _ => Opcode.Print } // Print
       | "," ^^ { _ => Opcode.Read } // Read
       | "[" ^^ { _ =>

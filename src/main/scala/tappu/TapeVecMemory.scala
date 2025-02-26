@@ -18,7 +18,7 @@ class TapeVecMemory(programPath: String, size: Int) extends TapeAbstract(program
   val init :: ready :: Nil = Enum(2)
   val state = RegInit(init)
   val tapeCounterReg = RegInit(0.U(16.W))
-  val pc = RegInit(0.U(16.W))  
+  val pc = RegInit(0.U(log2Ceil(program.length).W))  
 
     io.counter := tapeCounterReg
     io.instr := 0.U

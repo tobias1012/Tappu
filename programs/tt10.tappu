@@ -1,15 +1,21 @@
-// Go to memory
->0x2
 //loop
 +[
-    //Write 1
-    >+.
+    
+    >
+    +0xff.
     //Sleep loop
-    >+0xff
+    >+0x10
     [
         -
     ]
     //Write zero
-    <-.
+    <-0xff.
+    //Sleep loop
+    >+0x10
+    [
+        -
+    ]
+    <
+    
     <
 ]

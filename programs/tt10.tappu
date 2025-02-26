@@ -1,0 +1,15 @@
+// Go to memory
+>0x2
+//loop
++[
+    //Write 1
+    >+.
+    //Sleep loop
+    >+0xff
+    [
+        -
+    ]
+    //Write zero
+    <-.
+    <
+]

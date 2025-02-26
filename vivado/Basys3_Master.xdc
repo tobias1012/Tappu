@@ -7,8 +7,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports *]
 
 
 # Clock signal
-set_property PACKAGE_PIN W5 [get_ports clock]							
-	create_clock -add -name sys_clk_pin -period 1000000000 -waveform {0 500000000} [get_ports clock]
+set_property PACKAGE_PIN W5 [get_ports clock]		
+    # 1 hz = 1000000000 // 20 hz = 50000000 // 					
+	create_clock -add -name sys_clk_pin -period 1000000000 [get_ports clock]
  
 # Switches
 set_property PACKAGE_PIN V17 [get_ports {io_in[0]}]					

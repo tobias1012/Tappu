@@ -1,12 +1,1 @@
-project/
-target/
-*.fir
-*.v
-*.anno.json
 .vscode/
-.bloop/
-.metals/
-/Tappu/
-Tappu.sv
-*.mem
-.bsp/
